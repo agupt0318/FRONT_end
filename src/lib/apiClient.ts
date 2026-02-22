@@ -161,14 +161,14 @@ export const telemetryApi = {
 // ---------------------------------------------------------------------------
 
 export const inferenceApi = {
-  llm(prompt: string, model = 'gpt-4o'): Promise<InferenceResponse> {
+  llm(prompt: string, model = 'gemini-1.5-flash-latest'): Promise<InferenceResponse> {
     return request<InferenceResponse>('/inference/llm', {
       method: 'POST',
       body: JSON.stringify({ prompt, model } satisfies LLMRequest),
     });
   },
 
-  vlm(prompt: string, image_url: string, model = 'gpt-4o'): Promise<InferenceResponse> {
+  vlm(prompt: string, image_url: string, model = 'gemini-1.5-flash-latest'): Promise<InferenceResponse> {
     return request<InferenceResponse>('/inference/vlm', {
       method: 'POST',
       body: JSON.stringify({ prompt, image_url, model } satisfies VLMRequest),

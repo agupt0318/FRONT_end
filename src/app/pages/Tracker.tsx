@@ -5,7 +5,7 @@
  * and lets the user pick which registered device to view.
  */
 import { useEffect, useState } from 'react';
-import { Calendar, Clock, TrendingUp, CheckCircle2, XCircle, RefreshCw, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, CheckCircle2, XCircle, RefreshCw, AlertCircle, Volume2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { devicesApi, Device, TelemetryRecord, ApiError, inferenceApi } from '../../lib/apiClient';
 
@@ -34,6 +34,9 @@ export function Tracker() {
   const [aiReason, setAiReason]     = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiError, setAiError]       = useState('');
+  const [voiceLine, setVoiceLine]   = useState('');
+  const [voiceError, setVoiceError] = useState('');
+  const [isVoiceLoading, setIsVoiceLoading] = useState(false);
 
   // Load device list on mount
   useEffect(() => {
@@ -72,6 +75,26 @@ export function Tracker() {
   const goodTime = avgScore !== null ? Math.round(totalDuration * avgScore / 100) : 0;
 
   const formatDate = () => new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const speakText = (text: string) => {
+    if (!('speechSynthesis' in window)) {
+      throw new Error('Speech synthesis is not supported in this browser');
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+  };
 
   const calculateAiScore = async () => {
     if (!selectedId || todayRecords.length === 0) return;
@@ -121,6 +144,39 @@ export function Tracker() {
     }
   };
 
+  const generateAndPlayVoiceLine = async () => {
+    const basisScore = aiScore ?? avgScore;
+    if (basisScore === null) {
+      setVoiceError('No score available yet to generate voice feedback');
+      return;
+    }
+
+    const tone = basisScore >= 80 ? 'positive' : 'corrective';
+    const prompt = [
+      'You are a posture coach.',
+      `Current score is ${basisScore} out of 100.`,
+      `Tone must be ${tone}.`,
+      'Write ONE short spoken voice line (max 18 words), plain text only, no emojis, no quotes.',
+      'If corrective, be encouraging and give one clear action.',
+    ].join('\n');
+
+    setIsVoiceLoading(true);
+    setVoiceError('');
+    try {
+      const res = await inferenceApi.llm(prompt);
+      const line = (res.response ?? '').replace(/\s+/g, ' ').trim();
+      if (!line) {
+        throw new Error('Model returned an empty voice line');
+      }
+      setVoiceLine(line);
+      speakText(line);
+    } catch (err) {
+      setVoiceError(err instanceof Error ? err.message : 'Failed to generate or play voice line');
+    } finally {
+      setIsVoiceLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
@@ -166,6 +222,13 @@ export function Tracker() {
         </div>
       )}
 
+      {voiceError && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+          <p className="text-sm text-red-800 dark:text-red-300">{voiceError}</p>
+        </div>
+      )}
+
       {!isLoading && devices.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 border border-gray-100 dark:border-gray-700 text-center">
           <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -188,13 +251,23 @@ export function Tracker() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between gap-4 mb-3">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI Posture Score</h3>
-              <button
-                onClick={calculateAiScore}
-                disabled={isAiLoading || todayRecords.length === 0}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
-              >
-                {isAiLoading ? 'Calculating...' : 'Calculate with AI'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={calculateAiScore}
+                  disabled={isAiLoading || todayRecords.length === 0}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  {isAiLoading ? 'Calculating...' : 'Calculate with AI'}
+                </button>
+                <button
+                  onClick={generateAndPlayVoiceLine}
+                  disabled={isVoiceLoading || (avgScore === null && aiScore === null)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  {isVoiceLoading ? 'Generating...' : 'Play Voice Line'}
+                </button>
+              </div>
             </div>
             {aiScore === null ? (
               <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -204,6 +277,11 @@ export function Tracker() {
               <div>
                 <p className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">{aiScore}%</p>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{aiReason}</p>
+              </div>
+            )}
+            {voiceLine && (
+              <div className="mt-4 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
+                <p className="text-sm text-emerald-800 dark:text-emerald-300">{voiceLine}</p>
               </div>
             )}
           </div>
@@ -268,8 +346,11 @@ export function Tracker() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Today's Readings ({todayRecords.length})</h3>
             <div className="space-y-2 max-h-64 overflow-y-auto">
-              {todayRecords.map(r => (
-                <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
+              {todayRecords.map((r, idx) => (
+                <div
+                  key={`${r.id}-${r.created_at}-${idx}`}
+                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm"
+                >
                   <span className="text-gray-500 dark:text-gray-400">{new Date(r.payload.timestamp ?? r.created_at).toLocaleTimeString()}</span>
                   <span className="font-medium text-gray-900 dark:text-white">Raw: {r.payload.potentiometer_value.toFixed(3)}</span>
                   <span className={`font-bold ${scoreFromPayload(r) >= 80 ? 'text-green-600' : 'text-red-500'}`}>{scoreFromPayload(r)}%</span>
