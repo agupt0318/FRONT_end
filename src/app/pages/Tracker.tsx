@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { Calendar, Clock, TrendingUp, CheckCircle2, XCircle, RefreshCw, AlertCircle, Volume2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { devicesApi, Device, TelemetryRecord, ApiError, inferenceApi } from '../../lib/apiClient';
+import { devicesApi, usersDataApi, Device, TelemetryRecord, ApiError, inferenceApi } from '../../lib/apiClient';
 
 function todayISO() {
   return new Date().toISOString().split('T')[0];
@@ -38,6 +38,11 @@ export function Tracker() {
   const [voiceError, setVoiceError] = useState('');
   const [isVoiceLoading, setIsVoiceLoading] = useState(false);
 
+  const loadTelemetryForDevice = async (deviceId: string) => {
+    const allRows = await usersDataApi.list();
+    return allRows.filter((row) => String(row.device_id) === String(deviceId));
+  };
+
   // Load device list on mount
   useEffect(() => {
     if (!user) return;
@@ -55,7 +60,7 @@ export function Tracker() {
     if (!selectedId) return;
     setIsLoading(true);
     setError('');
-    devicesApi.getData(selectedId)
+    loadTelemetryForDevice(selectedId)
       .then(setTelemetry)
       .catch(err => setError(err instanceof ApiError ? err.message : 'Failed to load data'))
       .finally(() => setIsLoading(false));
@@ -199,7 +204,14 @@ export function Tracker() {
             </select>
           )}
           <button
-            onClick={() => { if (selectedId) { setIsLoading(true); devicesApi.getData(selectedId).then(setTelemetry).finally(() => setIsLoading(false)); } }}
+            onClick={() => {
+              if (selectedId) {
+                setIsLoading(true);
+                loadTelemetryForDevice(selectedId)
+                  .then(setTelemetry)
+                  .finally(() => setIsLoading(false));
+              }
+            }}
             className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             title="Refresh"
           >

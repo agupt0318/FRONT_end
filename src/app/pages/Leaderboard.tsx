@@ -101,7 +101,26 @@ export function Leaderboard() {
 
   const topThree = entries?.slice(0, 3) ?? [];
   const rest = entries?.slice(3) ?? [];
-  const currentUserRank = entries?.find(e => e.user_id === user?.id)?.rank ?? 0;
+  const userAliases = new Set(
+    [
+      user?.id,
+      user?.email?.split('@')[0],
+      user?.email,
+      user?.user_metadata?.full_name,
+      user?.user_metadata?.name,
+    ]
+      .filter((v): v is string => Boolean(v))
+      .map((v) => v.trim().toLowerCase())
+  );
+
+  const isCurrentUserEntry = (entry: LeaderboardEntry) => {
+    const candidates = [entry.user_id, entry.name]
+      .filter((v): v is string => Boolean(v))
+      .map((v) => v.trim().toLowerCase());
+    return candidates.some((candidate) => userAliases.has(candidate));
+  };
+
+  const currentUserRank = entries?.find((entry) => isCurrentUserEntry(entry))?.rank ?? 0;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -158,7 +177,7 @@ export function Leaderboard() {
           </h2>
           <div className="space-y-2">
             {rest.map((entry) => {
-              const isMe = entry.user_id === user?.id;
+              const isMe = isCurrentUserEntry(entry);
               return (
                 <div key={entry.user_id} className={`flex items-center justify-between p-4 rounded-lg transition-all ${isMe ? 'bg-indigo-50 dark:bg-indigo-900/20 border-2 border-indigo-300 dark:border-indigo-700' : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'}`}>
                   <div className="flex items-center gap-4 flex-1">

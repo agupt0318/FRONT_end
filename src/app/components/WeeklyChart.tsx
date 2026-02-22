@@ -2,7 +2,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useTheme } from 'next-themes';
 
 interface WeeklyChartProps {
-  data: Array<{ day: string; score: number; duration: number }>;
+  data: Array<{ day: string; score: number }>;
 }
 
 export function WeeklyChart({ data }: WeeklyChartProps) {
@@ -33,14 +33,6 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
             strokeWidth={2}
             dot={{ fill: '#6366f1', r: 4 }}
             name="Score (%)"
-          />
-          <Line
-            type="monotone"
-            dataKey="duration"
-            stroke="#8b5cf6"
-            strokeWidth={2}
-            dot={{ fill: '#8b5cf6', r: 4 }}
-            name="Duration (min)"
           />
         </LineChart>
       </ResponsiveContainer>

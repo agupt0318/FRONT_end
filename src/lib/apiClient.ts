@@ -41,6 +41,14 @@ export interface TelemetryRecord {
   created_at: string;
 }
 
+interface UserTelemetryRow {
+  telemetry_id: number;
+  device_id: number;
+  payload: TelemetryPayload;
+  created_at?: string | number | null;
+  score?: number;
+}
+
 export interface LLMRequest {
   prompt: string;
   model?: string;
@@ -139,6 +147,30 @@ export const devicesApi = {
 
   getData(device_id: string | number): Promise<TelemetryRecord[]> {
     return request<TelemetryRecord[]>(`/devices/get/${device_id}/data`);
+  },
+};
+
+function toIsoTimestamp(value: string | number | null | undefined): string {
+  if (typeof value === 'number') return new Date(value * 1000).toISOString();
+  if (typeof value === 'string' && value.trim().length > 0) return value;
+  return new Date().toISOString();
+}
+
+function normalizeUserTelemetryRow(row: UserTelemetryRow): TelemetryRecord {
+  const created_at = toIsoTimestamp(row.created_at);
+  const payload = row.payload ?? { potentiometer_value: 0, timestamp: created_at };
+  return {
+    id: String(row.telemetry_id),
+    device_id: row.device_id,
+    payload,
+    created_at,
+  };
+}
+
+export const usersDataApi = {
+  async list(): Promise<TelemetryRecord[]> {
+    const rows = await request<UserTelemetryRow[]>('/users/data');
+    return rows.map(normalizeUserTelemetryRow);
   },
 };
 

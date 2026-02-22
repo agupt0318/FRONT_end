@@ -8,17 +8,14 @@ import { StatCard } from '../components/StatCard';
 import { WeeklyChart } from '../components/WeeklyChart';
 import { RecentSessions } from '../components/RecentSessions';
 import { useAuth } from '../context/AuthContext';
-import { devicesApi, Device, TelemetryRecord, ApiError } from '../../lib/apiClient';
+import { devicesApi, usersDataApi, Device, TelemetryRecord, ApiError } from '../../lib/apiClient';
 
 // Map a telemetry record into the shape RecentSessions expects
-function toSession(record: TelemetryRecord, index: number) {
+function toSession(record: TelemetryRecord) {
   const score = Math.round(Math.min(100, record.payload.potentiometer_value * 100));
   return {
     id: record.id,
-    userId: 'me',
     date: record.payload.timestamp ?? record.created_at,
-    duration: 60,
-    goodPostureTime: Math.round(60 * score / 100),
     score,
   };
 }
@@ -29,7 +26,6 @@ function toWeeklyPoint(record: TelemetryRecord) {
   return {
     day: DAYS[new Date(record.payload.timestamp ?? record.created_at).getDay()],
     score,
-    duration: 60,
   };
 }
 
@@ -46,15 +42,13 @@ export function Dashboard() {
 
     (async () => {
       try {
-        const devList = await devicesApi.list();
+        const [devList, userTelemetry] = await Promise.all([
+          devicesApi.list(),
+          usersDataApi.list(),
+        ]);
         if (cancelled) return;
         setDevices(devList);
-
-        // Fetch telemetry for the first device (if any)
-        if (devList.length > 0) {
-          const data = await devicesApi.getData(devList[0].device_id);
-          if (!cancelled) setTelemetry(data);
-        }
+        setTelemetry(userTelemetry);
       } catch (err) {
         if (!cancelled) setError(err instanceof ApiError ? err.message : 'Failed to load data');
       } finally {
