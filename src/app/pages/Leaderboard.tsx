@@ -21,7 +21,7 @@ export function Leaderboard() {
           user_id: String(row.user_id ?? row.username ?? `user-${idx + 1}`),
           name: String(row.name ?? row.username ?? `User ${idx + 1}`),
           avatar: String(row.avatar ?? '👤'),
-          total_score: Math.round(Number(row.total_score ?? row.score ?? 0)),
+          total_score: 100 * Number(row.total_score ?? row.score ?? 0),
           total_days: Number(row.total_days ?? 0),
           streak: Number(row.streak ?? 0),
         })) as LeaderboardEntry[];
