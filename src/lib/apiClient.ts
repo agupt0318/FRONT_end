@@ -22,7 +22,7 @@ const API_BASE = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:8
 // ---------------------------------------------------------------------------
 
 export interface Device {
-  device_id: string;
+  device_id: string | number;
   name: string;
   owner_id: string;
   created_at: string;
@@ -36,7 +36,7 @@ export interface TelemetryPayload {
 
 export interface TelemetryRecord {
   id: string;
-  device_id: string;
+  device_id: string | number;
   payload: TelemetryPayload;
   created_at: string;
 }
@@ -114,20 +114,20 @@ export const devicesApi = {
     return request<Device[]>('/devices/list');
   },
 
-  create(device_id: string, name: string): Promise<Device> {
+  create(device_id: number, name: string): Promise<Device> {
     return request<Device>('/devices/create', {
       method: 'POST',
       body: JSON.stringify({ device_id, name }),
     });
   },
 
-  delete(device_id: string): Promise<{ message: string }> {
+  delete(device_id: string | number): Promise<{ message: string }> {
     return request<{ message: string }>(`/devices/delete/${device_id}`, {
       method: 'DELETE',
     });
   },
 
-  getData(device_id: string): Promise<TelemetryRecord[]> {
+  getData(device_id: string | number): Promise<TelemetryRecord[]> {
     return request<TelemetryRecord[]>(`/devices/get/${device_id}/data`);
   },
 };
@@ -142,7 +142,7 @@ export const telemetryApi = {
    * This endpoint has no auth guard in the backend, so we skip the token.
    */
   ingest(
-    device_id: string,
+    device_id: string | number,
     payload: TelemetryPayload,
   ): Promise<{ status: string; id: string }> {
     return request<{ status: string; id: string }>(

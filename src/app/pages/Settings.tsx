@@ -49,9 +49,14 @@ export function Settings() {
     e.preventDefault();
     const trimmedId = deviceId.trim();
     const trimmedName = deviceName.trim();
+    const parsedId = Number(trimmedId);
 
     if (!trimmedId || !trimmedName) {
       setDeviceError('Device ID and name are required');
+      return;
+    }
+    if (!Number.isInteger(parsedId) || parsedId <= 0) {
+      setDeviceError('Device ID must be a positive integer (example: 1001)');
       return;
     }
 
@@ -59,7 +64,7 @@ export function Settings() {
     setDeviceError('');
     setDeviceSuccess('');
     try {
-      await devicesApi.create(trimmedId, trimmedName);
+      await devicesApi.create(parsedId, trimmedName);
       setDeviceId('');
       setDeviceName('');
       setDeviceSuccess(`Device "${trimmedName}" registered`);
@@ -177,7 +182,7 @@ export function Settings() {
           <input
             value={deviceId}
             onChange={e => setDeviceId(e.target.value)}
-            placeholder="Device ID (e.g. esp32-01)"
+            placeholder="Device ID (e.g. 1001)"
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500"
             disabled={isSubmittingDevice}
           />

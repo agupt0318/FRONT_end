@@ -3,12 +3,24 @@
  */
 import { Trophy, Medal, Award, Flame, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useLeaderboard } from '../hooks/useApi';
 import { Link } from 'react-router';
+import { users } from '../data/mockData';
 
 export function Leaderboard() {
   const { user } = useAuth();
-  const { data: entries, isLoading } = useLeaderboard();
+  const entries = users
+    .map((u, idx) => ({
+      rank: idx + 1,
+      user_id: u.id,
+      name: u.name,
+      avatar: u.avatar,
+      total_score: u.totalScore,
+      total_days: u.totalDays,
+      streak: u.streak,
+    }))
+    .sort((a, b) => b.total_score - a.total_score)
+    .map((u, idx) => ({ ...u, rank: idx + 1 }));
+  const isLoading = false;
 
   const getMedalIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-500" />;

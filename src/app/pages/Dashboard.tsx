@@ -70,6 +70,10 @@ export function Dashboard() {
   const avgScore       = recentSessions.length
     ? Math.round(recentSessions.reduce((a, s) => a + s.score, 0) / recentSessions.length)
     : 0;
+  const scoreDelta     = recentSessions.length >= 2
+    ? recentSessions[0].score - recentSessions[1].score
+    : null;
+  const trendLabel     = scoreDelta === null ? undefined : `${scoreDelta >= 0 ? '+' : ''}${scoreDelta}%`;
 
   return (
     <div className="space-y-6">
@@ -86,7 +90,7 @@ export function Dashboard() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Average Score"  value={isLoading ? '…' : `${avgScore}%`}         icon={Award}      color="indigo" trend="+5%" />
+        <StatCard title="Average Score"  value={isLoading ? '…' : `${avgScore}%`}         icon={Award}      color="indigo" trend={isLoading ? undefined : trendLabel} />
         <StatCard title="Devices"        value={isLoading ? '…' : devices.length.toString()} icon={Activity}   color="blue" />
         <StatCard title="Readings"       value={isLoading ? '…' : telemetry.length.toString()} icon={Calendar} color="green" />
         <StatCard title="This Week"      value={isLoading ? '…' : `${Math.min(weeklyData.length, 7)} days`} icon={TrendingUp} color="purple" />

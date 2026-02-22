@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react';
 import { Calendar, Clock, TrendingUp, CheckCircle2, XCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { devicesApi, Device, TelemetryRecord, ApiError } from '../../lib/apiClient';
+import { devicesApi, Device, TelemetryRecord, ApiError, inferenceApi } from '../../lib/apiClient';
 
 function todayISO() {
   return new Date().toISOString().split('T')[0];
@@ -30,6 +30,10 @@ export function Tracker() {
   const [telemetry, setTelemetry]   = useState<TelemetryRecord[]>([]);
   const [isLoading, setIsLoading]   = useState(true);
   const [error, setError]           = useState('');
+  const [aiScore, setAiScore]       = useState<number | null>(null);
+  const [aiReason, setAiReason]     = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiError, setAiError]       = useState('');
 
   // Load device list on mount
   useEffect(() => {
@@ -69,6 +73,54 @@ export function Tracker() {
 
   const formatDate = () => new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+  const calculateAiScore = async () => {
+    if (!selectedId || todayRecords.length === 0) return;
+
+    const rawValues = todayRecords.map(r => r.payload.potentiometer_value);
+    const avgRaw = rawValues.reduce((a, b) => a + b, 0) / rawValues.length;
+    const minRaw = Math.min(...rawValues);
+    const maxRaw = Math.max(...rawValues);
+    const goodReadings = rawValues.filter(v => v >= 0.8).length;
+    const goodRatio = Math.round((goodReadings / rawValues.length) * 100);
+
+    const prompt = [
+      'You are scoring posture quality for a single day.',
+      'Return ONLY valid JSON in this exact shape: {"score": number, "reason": string}.',
+      'score must be an integer from 0 to 100.',
+      'Use this telemetry summary to calculate the score:',
+      JSON.stringify({
+        device_id: selectedId,
+        readings_count: rawValues.length,
+        avg_potentiometer_value: Number(avgRaw.toFixed(4)),
+        min_potentiometer_value: Number(minRaw.toFixed(4)),
+        max_potentiometer_value: Number(maxRaw.toFixed(4)),
+        good_readings_threshold: 0.8,
+        good_readings_count: goodReadings,
+        good_readings_ratio_percent: goodRatio,
+      }),
+      'Interpret higher potentiometer_value as better posture and keep reason concise.',
+    ].join('\n');
+
+    setIsAiLoading(true);
+    setAiError('');
+    setAiReason('');
+    try {
+      const res = await inferenceApi.llm(prompt);
+      const parsed = JSON.parse(res.response.match(/\{[\s\S]*\}/)?.[0] ?? '{}') as { score?: number; reason?: string };
+      if (typeof parsed.score !== 'number') {
+        throw new Error('Model response did not contain a numeric score');
+      }
+      const clamped = Math.max(0, Math.min(100, Math.round(parsed.score)));
+      setAiScore(clamped);
+      setAiReason(parsed.reason ?? 'Score calculated from today telemetry.');
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Failed to calculate AI score');
+      setAiScore(null);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
@@ -107,6 +159,13 @@ export function Tracker() {
         </div>
       )}
 
+      {aiError && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+          <p className="text-sm text-red-800 dark:text-red-300">{aiError}</p>
+        </div>
+      )}
+
       {!isLoading && devices.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 border border-gray-100 dark:border-gray-700 text-center">
           <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -125,6 +184,30 @@ export function Tracker() {
         </div>
       ) : avgScore !== null && (
         <>
+          {/* AI score */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between gap-4 mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">AI Posture Score</h3>
+              <button
+                onClick={calculateAiScore}
+                disabled={isAiLoading || todayRecords.length === 0}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                {isAiLoading ? 'Calculating...' : 'Calculate with AI'}
+              </button>
+            </div>
+            {aiScore === null ? (
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Run AI scoring to compute a score from today&apos;s telemetry summary.
+              </p>
+            ) : (
+              <div>
+                <p className="text-4xl font-bold text-indigo-600 dark:text-indigo-400 mb-2">{aiScore}%</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{aiReason}</p>
+              </div>
+            )}
+          </div>
+
           {/* Score display */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
             <div className="text-center mb-8">

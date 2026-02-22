@@ -17,6 +17,10 @@ const colorClasses = {
 };
 
 export function StatCard({ title, value, icon: Icon, color, trend }: StatCardProps) {
+  const trendClass = trend?.startsWith('-')
+    ? 'text-red-600 dark:text-red-400'
+    : 'text-green-600 dark:text-green-400';
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
       <div className="flex items-start justify-between">
@@ -24,7 +28,7 @@ export function StatCard({ title, value, icon: Icon, color, trend }: StatCardPro
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{title}</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
           {trend && (
-            <p className="text-sm text-green-600 dark:text-green-400 mt-2">{trend}</p>
+            <p className={`text-sm mt-2 ${trendClass}`}>{trend}</p>
           )}
         </div>
         <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
