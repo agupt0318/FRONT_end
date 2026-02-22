@@ -31,7 +31,8 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
             dataKey="score"
             stroke="#6366f1"
             strokeWidth={2}
-            dot={{ fill: '#6366f1', r: 4 }}
+            dot={false}
+            activeDot={{ r: 8, fill: '#6366f1', stroke: '#fff', strokeWidth: 2 }}
             name="Score (%)"
           />
         </LineChart>

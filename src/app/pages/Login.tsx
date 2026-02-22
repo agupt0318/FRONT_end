@@ -62,7 +62,7 @@ export function Login() {
               <Activity className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">PostureTrack</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Fulcurm</h1>
           <p className="text-gray-600 dark:text-gray-300">Monitor and improve your posture</p>
         </div>
 

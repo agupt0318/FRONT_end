@@ -22,7 +22,7 @@ export function Navigation() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <Activity className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-            <span className="text-xl font-semibold text-gray-900 dark:text-white">PostureTrack</span>
+            <span className="text-xl font-semibold text-gray-900 dark:text-white">Fulcurm</span>
           </div>
           
           <div className="flex items-center gap-4">
