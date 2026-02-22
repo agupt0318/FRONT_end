@@ -56,6 +56,16 @@ export interface InferenceResponse {
   response: string;
 }
 
+export interface LeaderboardEntry {
+  rank: number;
+  user_id: string;
+  name: string;
+  avatar: string;
+  total_score: number;
+  total_days: number;
+  streak: number;
+}
+
 // ---------------------------------------------------------------------------
 // Core fetch helper — retrieves the live Supabase token every call
 // ---------------------------------------------------------------------------
@@ -173,5 +183,15 @@ export const inferenceApi = {
       method: 'POST',
       body: JSON.stringify({ prompt, image_url, model } satisfies VLMRequest),
     });
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Leaderboard — GET /users/leaderboard
+// ---------------------------------------------------------------------------
+
+export const leaderboardApi = {
+  list(limit = 20): Promise<LeaderboardEntry[]> {
+    return request<LeaderboardEntry[]>(`/users/leaderboard?limit=${limit}`);
   },
 };

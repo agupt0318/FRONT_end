@@ -4,23 +4,32 @@
 import { Trophy, Medal, Award, Flame, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router';
-import { users } from '../data/mockData';
+import { useEffect, useState } from 'react';
+import { ApiError, leaderboardApi, LeaderboardEntry } from '../../lib/apiClient';
 
 export function Leaderboard() {
   const { user } = useAuth();
-  const entries = users
-    .map((u, idx) => ({
-      rank: idx + 1,
-      user_id: u.id,
-      name: u.name,
-      avatar: u.avatar,
-      total_score: u.totalScore,
-      total_days: u.totalDays,
-      streak: u.streak,
-    }))
-    .sort((a, b) => b.total_score - a.total_score)
-    .map((u, idx) => ({ ...u, rank: idx + 1 }));
-  const isLoading = false;
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    leaderboardApi.list(20)
+      .then((rows: any[]) => {
+        const normalized = (rows ?? []).map((row, idx) => ({
+          rank: Number(row.rank ?? idx + 1),
+          user_id: String(row.user_id ?? row.username ?? `user-${idx + 1}`),
+          name: String(row.name ?? row.username ?? `User ${idx + 1}`),
+          avatar: String(row.avatar ?? '👤'),
+          total_score: 100 * Number(row.total_score ?? row.score ?? 0),
+          total_days: Number(row.total_days ?? 0),
+          streak: Number(row.streak ?? 0),
+        })) as LeaderboardEntry[];
+        setEntries(normalized);
+      })
+      .catch((err) => setError(err instanceof ApiError ? err.message : 'Failed to load leaderboard'))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const getMedalIcon = (rank: number) => {
     if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-500" />;
@@ -71,6 +80,20 @@ export function Leaderboard() {
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg" />
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Leaderboard</h1>
+          <p className="text-gray-600 dark:text-gray-300">See how you rank against other users</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </div>
       </div>
     );

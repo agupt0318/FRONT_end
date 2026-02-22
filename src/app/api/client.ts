@@ -193,7 +193,7 @@ export const usersApi = {
 
 export const leaderboardApi = {
   list(limit = 20): Promise<LeaderboardEntry[]> {
-    return request<LeaderboardEntry[]>(`/api/leaderboard/?limit=${limit}`);
+    return request<LeaderboardEntry[]>(`/users/leaderboard?limit=${limit}`);
   },
 };
 
