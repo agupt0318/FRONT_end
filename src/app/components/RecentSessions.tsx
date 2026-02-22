@@ -8,9 +8,11 @@ interface SessionItem {
 
 interface RecentSessionsProps {
   sessions: SessionItem[];
+  totalCount?: number;
+  shownCount?: number;
 }
 
-export function RecentSessions({ sessions }: RecentSessionsProps) {
+export function RecentSessions({ sessions, totalCount, shownCount }: RecentSessionsProps) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -28,8 +30,15 @@ export function RecentSessions({ sessions }: RecentSessionsProps) {
   
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Days</h3>
-      <div className="space-y-3">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Days</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Showing {sessions.length}
+          {typeof totalCount === 'number' ? ` / ${totalCount}` : ''}
+          {typeof shownCount === 'number' ? ` (limit ${shownCount})` : ''}
+        </p>
+      </div>
+      <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
         {sessions.map((session) => (
           <div
             key={session.id}

@@ -20,7 +20,9 @@ function formatTime(minutes: number) {
 }
 
 function scoreFromPayload(r: TelemetryRecord) {
-  return Math.round(Math.min(100, r.payload.potentiometer_value * 100));
+  const raw = Number(r.payload.potentiometer_value ?? 0);
+  const normalized = ((8190 - raw) / 8190) * 100;
+  return Math.round(Math.max(0, Math.min(100, normalized)));
 }
 
 export function Tracker() {
@@ -156,13 +158,20 @@ export function Tracker() {
       return;
     }
 
-    const tone = basisScore >= 80 ? 'positive' : 'corrective';
+    const tone = basisScore < 50 ? 'harshly negative' : basisScore >= 80 ? 'positive' : 'corrective';
+    const collectedReadings = todayRecords.map((record) => ({
+      timestamp: record.payload.timestamp ?? record.created_at,
+      potentiometer_value: Number(record.payload.potentiometer_value.toFixed(4)),
+    }));
     const prompt = [
       'You are a posture coach.',
       `Current score is ${basisScore} out of 100.`,
       `Tone must be ${tone}.`,
+      'Use the following collected readings (with timestamps) as context:',
+      JSON.stringify(collectedReadings),
       'Write ONE short spoken voice line (max 18 words), plain text only, no emojis, no quotes.',
       'If corrective, be encouraging and give one clear action.',
+      'If harshly negative, be strict and blunt, but keep it safe and non-abusive.',
     ].join('\n');
 
     setIsVoiceLoading(true);

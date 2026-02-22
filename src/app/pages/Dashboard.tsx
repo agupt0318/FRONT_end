@@ -11,8 +11,14 @@ import { useAuth } from '../context/AuthContext';
 import { devicesApi, usersDataApi, Device, TelemetryRecord, ApiError } from '../../lib/apiClient';
 
 // Map a telemetry record into the shape RecentSessions expects
+function scoreFromPayload(record: TelemetryRecord) {
+  const raw = Number(record.payload.potentiometer_value ?? 0);
+  const normalized = ((8190 - raw) / 8190) * 100;
+  return Math.round(Math.max(0, Math.min(100, normalized)));
+}
+
 function toSession(record: TelemetryRecord) {
-  const score = Math.round(Math.min(100, record.payload.potentiometer_value * 100));
+  const score = scoreFromPayload(record);
   return {
     id: record.id,
     date: record.payload.timestamp ?? record.created_at,
@@ -22,7 +28,7 @@ function toSession(record: TelemetryRecord) {
 
 function toWeeklyPoint(record: TelemetryRecord) {
   const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const score = Math.round(Math.min(100, record.payload.potentiometer_value * 100));
+  const score = scoreFromPayload(record);
   return {
     day: DAYS[new Date(record.payload.timestamp ?? record.created_at).getDay()],
     score,
@@ -35,6 +41,7 @@ export function Dashboard() {
   const [telemetry, setTelemetry] = useState<TelemetryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError]         = useState('');
+  const [readingsShown, setReadingsShown] = useState(50);
 
   useEffect(() => {
     if (!user) return;
@@ -59,8 +66,8 @@ export function Dashboard() {
     return () => { cancelled = true; };
   }, [user]);
 
-  const recentSessions = telemetry.slice(0, 5).map(toSession);
-  const weeklyData     = telemetry.slice(0, 7).map(toWeeklyPoint).reverse();
+  const recentSessions = telemetry.slice(0, readingsShown).map(toSession);
+  const weeklyData     = telemetry.slice(0, readingsShown).map(toWeeklyPoint).reverse();
   const avgScore       = recentSessions.length
     ? Math.round(recentSessions.reduce((a, s) => a + s.score, 0) / recentSessions.length)
     : 0;
@@ -74,6 +81,22 @@ export function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dashboard</h1>
         <p className="text-gray-600 dark:text-gray-300">Track your posture progress and achievements</p>
+      </div>
+
+      <div className="flex items-center justify-end gap-2">
+        <label htmlFor="readings-shown" className="text-sm text-gray-600 dark:text-gray-300">
+          Readings shown
+        </label>
+        <select
+          id="readings-shown"
+          value={readingsShown}
+          onChange={(e) => setReadingsShown(Number(e.target.value))}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+        >
+          {[50, 100, 150, 200, 250, 500, 1000, 2000].map((count) => (
+            <option key={count} value={count}>{count}</option>
+          ))}
+        </select>
       </div>
 
       {error && (
@@ -92,7 +115,11 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <WeeklyChart data={isLoading ? [] : weeklyData} />
-        <RecentSessions sessions={isLoading ? [] : recentSessions} />
+        <RecentSessions
+          sessions={isLoading ? [] : recentSessions}
+          totalCount={telemetry.length}
+          shownCount={readingsShown}
+        />
       </div>
     </div>
   );
