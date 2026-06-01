@@ -1,11 +1,20 @@
+# Posture Tracker App
 
-  # Posture tracker app
+A frontend prototype for a posture tracking application.
 
-  This is a code bundle for Posture tracker app.
+## Stack
 
-  ## Running the code
+- TypeScript
+- React
+- Vite
 
-  Run `npm i` to install the dependencies.
+## Running locally
 
-  Run `npm run dev` to start the development server.
-  
+```bash
+npm install
+npm run dev
+```
+
+## Status
+
+Prototype frontend. The next improvements are connecting the UI to live posture data, adding clearer calibration states, and documenting the intended sensor or computer vision pipeline.
