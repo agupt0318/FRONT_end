@@ -2,7 +2,7 @@
  * src/lib/supabase.ts
  *
  * Supabase client singleton for client-side auth.
- * Uses the public anon key — safe to expose in the browser.
+ * Uses the public anon key, safe to expose in the browser.
  *
  * Set in .env.local:
  *   VITE_SUPABASE_URL=https://xxxx.supabase.co

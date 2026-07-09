@@ -1,5 +1,5 @@
 /**
- * Leaderboard.tsx — wired to real API data.
+ * Leaderboard.tsx: wired to real API data.
  */
 import { Trophy, Medal, Award, Flame, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';

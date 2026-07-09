@@ -1,5 +1,5 @@
 /**
- * Dashboard.tsx — fetches device data from the FastAPI backend.
+ * Dashboard.tsx: fetches device data from the FastAPI backend.
  * The apiClient automatically attaches the Supabase JWT.
  */
 import { useEffect, useState } from 'react';

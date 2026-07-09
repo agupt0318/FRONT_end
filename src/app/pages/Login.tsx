@@ -46,7 +46,7 @@ export function Login() {
     setError('');
     try {
       await loginWithOAuth(provider);
-      // Supabase redirects the browser — no navigate() needed
+      // Supabase redirects the browser, no navigate() needed
     } catch (err: any) {
       setError(err.message ?? 'OAuth login failed.');
     }

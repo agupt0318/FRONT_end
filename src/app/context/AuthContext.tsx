@@ -23,7 +23,7 @@ interface AuthContextType {
   signUp:         (email: string, password: string) => Promise<void>;
   loginWithOAuth: (provider: 'google' | 'github')  => Promise<void>;
   logout:         () => Promise<void>;
-  // Legacy compat — used by Settings page
+  // Legacy compat, used by Settings page
   updatePrivacySettings: (show: boolean) => void;
 }
 
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  // Settings page calls this — no-op for now (privacy stored in DB)
+  // Settings page calls this; no-op for now (privacy stored in DB)
   const updatePrivacySettings = (_show: boolean) => {};
 
   return (

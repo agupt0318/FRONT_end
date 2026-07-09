@@ -2,7 +2,7 @@
  * Root.tsx
  *
  * Layout shell. Waits for Supabase to rehydrate the session before
- * deciding to redirect — prevents the blank-screen flash on page load.
+ * deciding to redirect, which prevents the blank-screen flash on page load.
  */
 import { Outlet, useNavigate } from 'react-router';
 import { useEffect } from 'react';
@@ -32,7 +32,7 @@ export function Root() {
     );
   }
 
-  // Not logged in — useEffect above will redirect, render nothing meanwhile
+  // Not logged in; the useEffect above will redirect, render nothing meanwhile
   if (!user) return null;
 
   return (

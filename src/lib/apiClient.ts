@@ -18,7 +18,7 @@ import { supabase } from './supabase';
 const API_BASE = (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:8000';
 
 // ---------------------------------------------------------------------------
-// Types — mirror the FastAPI schemas exactly
+// Types: mirror the FastAPI schemas exactly
 // ---------------------------------------------------------------------------
 
 export interface Device {
@@ -75,7 +75,7 @@ export interface LeaderboardEntry {
 }
 
 // ---------------------------------------------------------------------------
-// Core fetch helper — retrieves the live Supabase token every call
+// Core fetch helper: retrieves the live Supabase token every call
 // ---------------------------------------------------------------------------
 
 export class ApiError extends Error {
@@ -123,7 +123,7 @@ async function request<T>(
 }
 
 // ---------------------------------------------------------------------------
-// Devices — POST /devices/create  GET /devices/list  DELETE /devices/delete/:id
+// Devices: POST /devices/create  GET /devices/list  DELETE /devices/delete/:id
 //           GET /devices/get/:id/data
 // ---------------------------------------------------------------------------
 
@@ -175,7 +175,7 @@ export const usersDataApi = {
 };
 
 // ---------------------------------------------------------------------------
-// Telemetry — POST /ingest/:device_id  (no auth required on this route)
+// Telemetry: POST /ingest/:device_id  (no auth required on this route)
 // ---------------------------------------------------------------------------
 
 export const telemetryApi = {
@@ -193,13 +193,13 @@ export const telemetryApi = {
         method: 'POST',
         body: JSON.stringify(payload),
       },
-      false,   // no auth header — matches backend route
+      false,   // no auth header, matches backend route
     );
   },
 };
 
 // ---------------------------------------------------------------------------
-// Inference — POST /inference/llm   POST /inference/vlm
+// Inference: POST /inference/llm   POST /inference/vlm
 // ---------------------------------------------------------------------------
 
 export const inferenceApi = {
@@ -219,7 +219,7 @@ export const inferenceApi = {
 };
 
 // ---------------------------------------------------------------------------
-// Leaderboard — GET /users/leaderboard
+// Leaderboard: GET /users/leaderboard
 // ---------------------------------------------------------------------------
 
 export const leaderboardApi = {

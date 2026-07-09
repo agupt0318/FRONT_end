@@ -1,4 +1,4 @@
-# PostureTrack — Full-Stack Integration Guide
+# PostureTrack: Full-Stack Integration Guide
 
 ## Architecture
 
@@ -15,7 +15,7 @@ Frontend (Vite + React)          Backend (FastAPI)           Database
 
 ---
 
-## 1 — Supabase Setup
+## 1. Supabase Setup
 
 1. Create a project at https://supabase.com
 2. Go to **SQL Editor** and run the contents of `backend/schema.sql`
@@ -25,7 +25,7 @@ Frontend (Vite + React)          Backend (FastAPI)           Database
 
 ---
 
-## 2 — Backend Setup
+## 2. Backend Setup
 
 ```bash
 cd backend
@@ -47,7 +47,7 @@ Swagger UI available at: http://localhost:8000/docs
 
 ---
 
-## 3 — Frontend Setup
+## 3. Frontend Setup
 
 ```bash
 # In the project root
@@ -98,9 +98,9 @@ src/app/
 ### Auth
 | Method | Path | Body | Auth |
 |---|---|---|---|
-| POST | `/api/auth/register` | `{email, password}` | — |
-| POST | `/api/auth/login` | `{email, password}` | — |
-| GET | `/api/auth/me` | — | ✅ |
+| POST | `/api/auth/register` | `{email, password}` | none |
+| POST | `/api/auth/login` | `{email, password}` | none |
+| GET | `/api/auth/me` | none | ✅ |
 
 ### Sessions
 | Method | Path | Notes |
@@ -125,7 +125,7 @@ src/app/
 
 ## Remaining integrations (not yet wired)
 
-- **Tracker page** — call `sessionsApi.create()` when a session ends
-- **Settings page** — call `usersApi.update()` for profile/privacy changes
-- **Login page** — already calls `authApi.login()` via `AuthContext`
-- **Streak calculation** — currently simplified; add proper consecutive-day logic in `sessions.py → _update_user_stats`
+- **Tracker page**: call `sessionsApi.create()` when a session ends
+- **Settings page**: call `usersApi.update()` for profile/privacy changes
+- **Login page**: already calls `authApi.login()` via `AuthContext`
+- **Streak calculation**: currently simplified; add proper consecutive-day logic in `sessions.py → _update_user_stats`
